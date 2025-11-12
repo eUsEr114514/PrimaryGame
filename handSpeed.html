@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手速测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 开始屏幕 */
+        #startScreen {
+            background: radial-gradient(circle at center, #003366 0%, #001a33 100%);
+            color: white;
+        }
+
+        #startScreen h1 {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        #startScreen p {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* 游戏屏幕 */
+        #gameScreen {
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            color: white;
+        }
+
+        .stats {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            font-size: 1.2rem;
+        }
+
+        .clickArea {
+            width: 80%;
+            height: 60%;
+            background-color: #0066ff;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+
+        .clickArea:active {
+            background-color: #004499;
+        }
+
+        /* 结果屏幕 */
+        #resultScreen {
+            background: radial-gradient(circle at center, #ff66cc 0%, #330022 100%);
+            color: white;
+        }
+
+        #resultScreen h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        #resultScreen p {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            #startScreen h1, #resultScreen h2 {
+                font-size: 3rem;
+            }
+            #startScreen p, #resultScreen p {
+                font-size: 1.2rem;
+            }
+            .stats {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- 开始屏幕 -->
+<div id="startScreen" class="screen">
+    <h1>手速测试</h1>
+    <p>10 秒内尽可能多地点击屏幕</p>
+    <p style="margin-top: 2rem; font-size: 1.2rem;">点击任意位置开始</p>
+</div>
+
+<!-- 游戏屏幕 -->
+<div id="gameScreen" class="screen hidden">
+    <div class="stats">
+        <div>剩余时间: <span id="timer">10</span> 秒</div>
+        <div>点击次数: <span id="clicks">0</span></div>
+        <div>每秒点击: <span id="cps">0</span></div>
+    </div>
+    <div class="clickArea" id="clickArea">
+        点击这里！
+    </div>
+</div>
+
+<!-- 结果屏幕 -->
+<div id="resultScreen" class="screen hidden">
+    <h2>游戏结束！</h2>
+    <p>总点击数: <span id="totalClicks">0</span></p>
+    <p>平均每秒点击: <span id="avgCps">0</span></p>
+    <p style="margin-top: 2rem; font-size: 1.2rem;">3秒后返回开始界面</p>
+</div>
+
+<script>
+    let clicks = 0;
+    let timeLeft = 30;
+    let gameInterval;
+    let startTime;
+
+    const startScreen = document.getElementById('startScreen');
+    const gameScreen = document.getElementById('gameScreen');
+    const resultScreen = document.getElementById('resultScreen');
+    const clickArea = document.getElementById('clickArea');
+    const timerDisplay = document.getElementById('timer');
+    const clicksDisplay = document.getElementById('clicks');
+    const cpsDisplay = document.getElementById('cps');
+    const totalClicksDisplay = document.getElementById('totalClicks');
+    const avgCpsDisplay = document.getElementById('avgCps');
+
+    // 开始游戏
+    function startGame() {
+        clicks = 0;
+        timeLeft = 30;
+        startScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        updateDisplay();
+
+        startTime = Date.now();
+        gameInterval = setInterval(updateTimer, 100);
+    }
+
+    // 更新计时器
+    function updateTimer() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        timeLeft = Math.max(0, 10 - elapsed);
+
+        if (timeLeft <= 0) {
+            endGame();
+        }
+
+        updateDisplay();
+    }
+
+    // 更新显示
+    function updateDisplay() {
+        timerDisplay.textContent = timeLeft.toFixed(1);
+        clicksDisplay.textContent = clicks;
+        const cps = timeLeft > 0 ? (clicks / (10 - timeLeft)).toFixed(1) : '0';
+        cpsDisplay.textContent = cps;
+    }
+
+    // 结束游戏
+    function endGame() {
+        clearInterval(gameInterval);
+        const avgCps = (clicks / 10).toFixed(1);
+        totalClicksDisplay.textContent = clicks;
+        avgCpsDisplay.textContent = avgCps;
+
+        gameScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+
+        setTimeout(() => {
+            resultScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }, 3000);
+    }
+
+    // 处理点击
+    clickArea.addEventListener('click', () => {
+        if (!gameScreen.classList.contains('hidden')) {
+            clicks++;
+            updateDisplay();
+        }
+    });
+
+    // 处理触摸
+    clickArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!gameScreen.classList.contains('hidden')) {
+            clicks++;
+            updateDisplay();
+        }
+    });
+
+    // 开始界面点击事件
+    startScreen.addEventListener('click', startGame);
+
+    // 防止默认触摸行为
+    document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>指尖宇宙</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            cursor: crosshair;
+            font-family: Arial, sans-serif;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .planet {
+            position: absolute;
+            font-size: 40px;
+            pointer-events: none;
+            animation: fadeInOut 5s forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(0deg);
+            }
+            20% {
+                opacity: 1;
+                transform: scale(1.2) rotate(180deg);
+            }
+            80% {
+                opacity: 1;
+                transform: scale(1) rotate(360deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) rotate(720deg);
+            }
+        }
+
+        .trail {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: linear-gradient(to right, white, transparent);
+            pointer-events: none;
+            animation: trailFade 1s forwards;
+        }
+
+        @keyframes trailFade {
+            0% {
+                opacity: 1;
+                transform: scaleX(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scaleX(0);
+            }
+        }
+
+        .moon {
+            position: absolute;
+            font-size: 20px;
+            pointer-events: none;
+            animation: orbit 3s linear infinite;
+        }
+
+        @keyframes orbit {
+            from {
+                transform: rotate(0deg) translateX(30px) rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg) translateX(30px) rotate(-360deg);
+            }
+        }
+
+        .hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            text-align: center;
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<div id="canvas"></div>
+<div class="hint">点击或滑动屏幕创造星球 ✨</div>
+
+<script>
+    const canvas = document.getElementById('canvas');
+    const planets = ['🌍', '🌎', '🌏', '🪐', '🌕', '🌖', '🌗', '🌘', '🌑', '🌒', '🌓', '🌔', '⭐', '🌟', '💫', '☄️', '🌌'];
+
+    // 创建背景星星
+    function createBackgroundStars() {
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.width = Math.random() * 3 + 'px';
+            star.style.height = star.style.width;
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            canvas.appendChild(star);
+        }
+    }
+
+    // 创建拖尾效果
+    function createTrail(x, y, angle) {
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                const trail = document.createElement('div');
+                trail.className = 'trail';
+                trail.style.left = x + Math.cos(angle) * i * 5 + 'px';
+                trail.style.top = y + Math.sin(angle) * i * 5 + 'px';
+                trail.style.transform = `rotate(${angle}rad)`;
+                canvas.appendChild(trail);
+                setTimeout(() => trail.remove(), 1000);
+            }, i * 20);
+        }
+    }
+
+    // 创建星球
+    function createPlanet(x, y) {
+        const planet = document.createElement('div');
+        planet.className = 'planet';
+        planet.textContent = planets[Math.floor(Math.random() * planets.length)];
+        planet.style.left = x - 20 + 'px';
+        planet.style.top = y - 20 + 'px';
+
+        // 如果是星星，添加拖尾效果
+        if (planet.textContent === '⭐' || planet.textContent === '🌟') {
+            const angle = Math.random() * Math.PI * 2;
+            createTrail(x, y, angle);
+        }
+
+        // 为某些星球添加月亮
+        if (Math.random() > 0.5) {
+            const moon = document.createElement('div');
+            moon.className = 'moon';
+            moon.textContent = '🌙';
+            moon.style.left = x - 10 + 'px';
+            moon.style.top = y - 10 + 'px';
+            canvas.appendChild(moon);
+
+            // 月亮跟随星球一起消失
+            setTimeout(() => moon.remove(), 5000);
+        }
+
+        canvas.appendChild(planet);
+
+        // 5秒后移除星球
+        setTimeout(() => planet.remove(), 5000);
+    }
+
+    // 鼠标事件
+    let isMouseDown = false;
+    document.addEventListener('mousedown', () => isMouseDown = true);
+    document.addEventListener('mouseup', () => isMouseDown = false);
+    document.addEventListener('mousemove', (e) => {
+        if (isMouseDown) {
+            createPlanet(e.clientX, e.clientY);
+        }
+    });
+    document.addEventListener('click', (e) => {
+        createPlanet(e.clientX, e.clientY);
+    });
+
+    // 触摸事件
+    let isTouch = false;
+    document.addEventListener('touchstart', (e) => {
+        isTouch = true;
+        createPlanet(e.touches[0].clientX, e.touches[0].clientY);
+    });
+    document.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (isTouch) {
+            createPlanet(e.touches[0].clientX, e.touches[0].clientY);
+        }
+    });
+    document.addEventListener('touchend', () => isTouch = false);
+
+    // 初始化
+    createBackgroundStars();
+</script>
+</body>
+</html>
