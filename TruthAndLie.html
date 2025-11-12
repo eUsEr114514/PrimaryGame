@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测谎仪 - 真相检测器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.5s ease;
+        }
+
+        body.truth {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        body.lie {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        body.warning {
+            background: #000;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            transition: all 0.3s ease;
+        }
+
+        .warning .container {
+            background: rgba(0, 0, 0, 0.9);
+            color: #ff0000;
+            border: 2px solid #ff0000;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .warning h1 {
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        .warning label {
+            color: #ff0000;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .warning button {
+            background: #ff0000;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        .result-icon {
+            font-size: 3em;
+            margin-right: 15px;
+        }
+
+        .truth-result {
+            background: rgba(17, 153, 142, 0.1);
+            color: #11998e;
+            border: 2px solid #11998e;
+        }
+
+        .lie-result {
+            background: rgba(235, 51, 73, 0.1);
+            color: #eb3349;
+            border: 2px solid #eb3349;
+        }
+
+        .warning-result {
+            background: rgba(255, 0, 0, 0.1);
+            color: #ff0000;
+            border: 2px solid #ff0000;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% {
+                opacity: 1;
+            }
+            25%, 75% {
+                opacity: 0.5;
+            }
+        }
+
+        .warning-text {
+            font-size: 1.5em;
+            text-align: center;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .warning-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-animation {
+            animation: pulse 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🕵️ 智能测谎仪</h1>
+
+    <div class="input-section">
+        <label for="userInput">请输入您要说的话：</label>
+        <input type="text" id="userInput" placeholder="在这里输入..." maxlength="100">
+    </div>
+
+    <button onclick="detectTruth()">开始检测</button>
+
+    <div id="result" class="result hidden"></div>
+
+    <div id="warningMessage" class="hidden">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text">
+            <p>已锁定位置</p>
+            <p>已拨打110</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function detectTruth() {
+        const input = document.getElementById('userInput').value.trim();
+        const resultDiv = document.getElementById('result');
+        const warningDiv = document.getElementById('warningMessage');
+        const body = document.body;
+
+        // 重置所有状态
+        body.className = '';
+        resultDiv.className = 'result hidden';
+        warningDiv.className = 'hidden';
+
+        // 检查是否为空
+        if (!input) {
+            alert('请输入一些内容！');
+            return;
+        }
+
+        // 检查是否包含汉字
+        const hasChinese = /[\u4e00-\u9fa5]/.test(input);
+
+        if (!hasChinese) {
+            // 非汉字输入 - 警告状态
+            body.className = 'warning';
+            warningDiv.className = '';
+
+            // 播放警告效果
+            document.querySelector('.container').classList.add('pulse-animation');
+            setTimeout(() => {
+                document.querySelector('.container').classList.remove('pulse-animation');
+            }, 500);
+
+            // 模拟拨打110的效果
+            setTimeout(() => {
+                alert('🚨 警告：系统检测到异常输入，安全程序已启动！');
+            }, 1000);
+
+            return;
+        }
+
+        // 随机判断真话还是假话（50%概率）
+        const isTruth = Math.random() >= 0.5;
+
+        if (isTruth) {
+            // 真话
+            body.className = 'truth';
+            resultDiv.className = 'result truth-result';
+            resultDiv.innerHTML = '<span class="result-icon">✅</span>检测通过！您说的是真话！';
+        } else {
+            // 假话
+            body.className = 'lie';
+            resultDiv.className = 'result lie-result';
+            resultDiv.innerHTML = '<span class="result-icon">❌</span>警报！检测到谎言！';
+        }
+
+        // 显示结果
+        resultDiv.classList.remove('hidden');
+
+        // 添加脉冲动画效果
+        resultDiv.classList.add('pulse-animation');
+        setTimeout(() => {
+            resultDiv.classList.remove('pulse-animation');
+        }, 500);
+    }
+
+    // 回车键触发检测
+    document.getElementById('userInput').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            detectTruth();
+        }
+    });
+
+    // 输入时的实时反馈
+    document.getElementById('userInput').addEventListener('input', function() {
+        const input = this.value;
+        const hasChinese = /[\u4e00-\u9fa5]/.test(input);
+
+        if (input && !hasChinese) {
+            this.style.borderColor = '#ff0000';
+            this.style.boxShadow = '0 0 10px rgba(255, 0, 0, 0.3)';
+        } else {
+            this.style.borderColor = '#ddd';
+            this.style.boxShadow = 'none';
+        }
+    });
+</script>
+</body>
+</html>
